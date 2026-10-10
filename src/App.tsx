@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase, type Product, type Category } from '@/lib/supabase';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
@@ -7,11 +8,12 @@ import { Catalog } from '@/components/Catalog';
 import { StockMovements } from '@/components/StockMovements';
 import { ProductModal } from '@/components/ProductModal';
 import { Toast } from '@/components/Toast';
+import { LoginPage } from '@/components/LoginPage';
 
 export type View = 'dashboard' | 'inventory' | 'catalog' | 'movements';
 export type ToastMsg = { id: string; text: string; type: 'success' | 'error' };
 
-export default function App() {
+function ProtectedApp() {
   const [view, setView] = useState<View>('dashboard');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -22,6 +24,7 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   const showToast = useCallback((text: string, type: 'success' | 'error' = 'success') => {
     const id = crypto.randomUUID();
@@ -41,8 +44,30 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session) loadData();
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session) {
+        loadData();
+      } else {
+        setProducts([]);
+        setCategories([]);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [loadData]);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   const openAddProduct = () => {
     setEditingProduct(null);
@@ -116,13 +141,24 @@ export default function App() {
               />
             </div>
           </div>
-          <button
-            onClick={openAddProduct}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 active:scale-95 transition shadow-sm shadow-emerald-600/20"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span className="hidden sm:inline">Nouveau produit</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={openAddProduct}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 active:scale-95 transition shadow-sm shadow-emerald-600/20"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span className="hidden sm:inline">Nouveau produit</span>
+            </button>
+            {user && (
+              <button
+                onClick={signOut}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                Déconnexion
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Main content */}
@@ -167,5 +203,16 @@ export default function App() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/*" element={<ProtectedApp />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
