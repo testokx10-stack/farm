@@ -6,6 +6,7 @@ const navItems: { key: View; label: string; icon: string }[] = [
   { key: 'inventory', label: 'Inventaire', icon: 'M20 7L12 3 4 7v10l8 4 8-4V7zM12 12L4 7m8 5l8-5m-8 5v10' },
   { key: 'catalog', label: 'Catalogue', icon: 'M3 7h18M3 12h18M3 17h18' },
   { key: 'movements', label: 'Mouvements', icon: 'M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4' },
+  { key: 'suppliers', label: 'Fournisseurs', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
 ];
 
 const iconColors: Record<string, string> = {

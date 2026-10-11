@@ -1,25 +1,30 @@
 import { useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase, type Product, type Category } from '@/lib/supabase';
+import { supabase, type Product, type Category, type Supplier } from '@/lib/supabase';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { Inventory } from '@/components/Inventory';
 import { Catalog } from '@/components/Catalog';
 import { StockMovements } from '@/components/StockMovements';
+import { Suppliers } from '@/components/Suppliers';
 import { ProductModal } from '@/components/ProductModal';
+import { SupplierModal } from '@/components/SupplierModal';
 import { Toast } from '@/components/Toast';
 import { LoginPage } from '@/components/LoginPage';
 
-export type View = 'dashboard' | 'inventory' | 'catalog' | 'movements';
+export type View = 'dashboard' | 'inventory' | 'catalog' | 'movements' | 'suppliers';
 export type ToastMsg = { id: string; text: string; type: 'success' | 'error' };
 
 function ProtectedApp() {
   const [view, setView] = useState<View>('dashboard');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [toasts, setToasts] = useState<ToastMsg[]>([]);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -34,12 +39,14 @@ function ProtectedApp() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [{ data: cats }, { data: prods }] = await Promise.all([
+    const [{ data: cats }, { data: prods }, { data: sups }] = await Promise.all([
       supabase.from('categories').select('*').order('sort_order'),
       supabase.from('products').select('*, category:categories(*), supplier:suppliers(*)').order('created_at', { ascending: false }),
+      supabase.from('suppliers').select('*').order('name'),
     ]);
     setCategories(cats || []);
     setProducts(prods || []);
+    setSuppliers(sups || []);
     setLoading(false);
   }, []);
 
@@ -98,6 +105,28 @@ function ProtectedApp() {
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) { showToast('Erreur lors de la suppression', 'error'); return; }
     showToast('Produit supprimé');
+    loadData();
+  };
+
+  const handleSaveSupplier = async (data: Partial<Supplier>) => {
+    if (editingSupplier) {
+      const { error } = await supabase.from('suppliers').update(data).eq('id', editingSupplier.id);
+      if (error) { showToast('Erreur lors de la modification', 'error'); return; }
+      showToast('Fournisseur modifié avec succès');
+    } else {
+      const { error } = await supabase.from('suppliers').insert(data);
+      if (error) { showToast('Erreur lors de l\'ajout', 'error'); return; }
+      showToast('Fournisseur ajouté avec succès');
+    }
+    setSupplierModalOpen(false);
+    setEditingSupplier(null);
+    loadData();
+  };
+
+  const handleDeleteSupplier = async (id: string) => {
+    const { error } = await supabase.from('suppliers').delete().eq('id', id);
+    if (error) { showToast('Erreur lors de la suppression', 'error'); return; }
+    showToast('Fournisseur supprimé');
     loadData();
   };
 
@@ -183,6 +212,7 @@ function ProtectedApp() {
               )}
               {view === 'catalog' && <Catalog products={filteredProducts} categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} onEdit={openEditProduct} />}
               {view === 'movements' && <StockMovements products={products} onRefresh={loadData} showToast={showToast} />}
+              {view === 'suppliers' && <Suppliers suppliers={suppliers} onRefresh={loadData} showToast={showToast} />}
             </div>
           )}
         </main>
@@ -194,6 +224,14 @@ function ProtectedApp() {
           categories={categories}
           onClose={() => setModalOpen(false)}
           onSave={handleSaveProduct}
+        />
+      )}
+
+      {supplierModalOpen && (
+        <SupplierModal
+          supplier={editingSupplier}
+          onClose={() => { setSupplierModalOpen(false); setEditingSupplier(null); }}
+          onSave={handleSaveSupplier}
         />
       )}
 
