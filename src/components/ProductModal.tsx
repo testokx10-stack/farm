@@ -161,6 +161,22 @@ export function ProductModal({ product, categories, onClose, onSave }: Props) {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1.5">Image URL</label>
+            <input
+              type="url"
+              value={form.image_url}
+              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+              placeholder="https://exemple.com/image.jpg"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-400 focus:bg-white transition"
+            />
+            {form.image_url && (
+              <div className="mt-2">
+                <img src={form.image_url} alt="Aperçu" className="w-32 h-32 object-cover rounded-lg border border-slate-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              </div>
+            )}
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-slate-600 mb-1.5">Description</label>
             <textarea
               value={form.description}
