@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Product, Category } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 
@@ -29,12 +29,32 @@ export function ProductModal({ product, categories, onClose, onSave }: Props) {
   });
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [supplierId, setSupplierId] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => {
       if (data) setSuppliers(data);
     });
   }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      setForm((prev) => ({ ...prev, image_url: data.publicUrl }));
+    } catch (err: any) {
+      alert(`Erreur upload: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (product) {
@@ -161,19 +181,60 @@ export function ProductModal({ product, categories, onClose, onSave }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">Image URL</label>
-            <input
-              type="url"
-              value={form.image_url}
-              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              placeholder="https://exemple.com/image.jpg"
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-400 focus:bg-white transition"
-            />
+            <label className="block text-sm font-medium text-slate-600 mb-1.5">Image du produit</label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              {uploading ? (
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-slate-500">Envoi en cours...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <p className="text-sm font-medium text-emerald-700">Choisir une image</p>
+                  <p className="text-xs text-slate-400">Depuis votre appareil (JPG, PNG...)</p>
+                </div>
+              )}
+            </div>
+
             {form.image_url && (
-              <div className="mt-2">
-                <img src={form.image_url} alt="Aperçu" className="w-32 h-32 object-cover rounded-lg border border-slate-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              <div className="mt-2 relative">
+                <img src={form.image_url} alt="Aperçu" className="w-full h-40 object-cover rounded-lg border border-slate-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, image_url: '' }))}
+                  className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-lg shadow-sm transition"
+                  title="Retirer l'image"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
             )}
+
+            <details className="mt-2">
+              <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600">ou coller une URL</summary>
+              <input
+                type="url"
+                value={form.image_url}
+                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                placeholder="https://exemple.com/image.jpg"
+                className="mt-1.5 w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-400 focus:bg-white transition"
+              />
+            </details>
           </div>
 
           <div>

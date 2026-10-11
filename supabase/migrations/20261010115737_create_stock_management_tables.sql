@@ -170,3 +170,23 @@ FROM (VALUES
   ('Carottes', 'Légumes', 'kg', 2200, 300, 4, 'Souss-Massa', 'Automne 2026', 'A', 'Carottes fraîches, calibre moyen', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=300&fit=crop', true)
 ) AS p(name, cat_name, unit, quantity, min_threshold, price_per_unit, origin, season, quality_grade, description, image_url, is_available)
 JOIN categories c ON c.name = p.cat_name;
+
+-- Storage: bucket public pour les images produits
+INSERT INTO storage.buckets (id, name, public) VALUES ('product-images', 'product-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "public_read_product_images" ON storage.objects;
+CREATE POLICY "public_read_product_images" ON storage.objects FOR SELECT
+  TO anon, authenticated USING (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "public_insert_product_images" ON storage.objects;
+CREATE POLICY "public_insert_product_images" ON storage.objects FOR INSERT
+  TO anon, authenticated WITH CHECK (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "public_update_product_images" ON storage.objects;
+CREATE POLICY "public_update_product_images" ON storage.objects FOR UPDATE
+  TO anon, authenticated USING (bucket_id = 'product-images') WITH CHECK (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "public_delete_product_images" ON storage.objects;
+CREATE POLICY "public_delete_product_images" ON storage.objects FOR DELETE
+  TO anon, authenticated USING (bucket_id = 'product-images');
