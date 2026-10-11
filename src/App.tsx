@@ -21,6 +21,7 @@ function ProtectedApp() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -54,17 +55,21 @@ function ProtectedApp() {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setAuthChecked(true);
       if (session) loadData();
+      else setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setAuthChecked(true);
       if (session) {
         loadData();
       } else {
         setProducts([]);
         setCategories([]);
+        setSuppliers([]);
         setLoading(false);
       }
     });
@@ -75,6 +80,20 @@ function ProtectedApp() {
   const signOut = async () => {
     await supabase.auth.signOut();
   };
+
+  // Redirect to login if not authenticated
+  if (authChecked && !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-slate-500 text-sm">Chargement...</p>
+      </div>
+    );
+  }
 
   const openAddProduct = () => {
     setEditingProduct(null);
