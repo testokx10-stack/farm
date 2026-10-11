@@ -162,11 +162,11 @@ DELETE FROM products;
 INSERT INTO products (name, category_id, unit, quantity, min_threshold, price_per_unit, origin, season, quality_grade, description, image_url, is_available)
 SELECT p.name, c.id, p.unit, p.quantity, p.min_threshold, p.price_per_unit, p.origin, p.season, p.quality_grade, p.description, p.image_url, p.is_available
 FROM (VALUES
-  ('Tomates', 'Légumes', 'kg', 1200, 200, 8, 'Souss-Massa', 'Automne 2026', 'A', 'Tomates fraîches de la région de Souss, calibre 60-80mm', 'https://picsum.photos/seed/tomates/400/300', true),
-  ('Oranges', 'Agrumes', 'kg', 3500, 500, 5, 'Souss-Massa', 'Hiver 2026', 'A', 'Oranges Maroc Late, calibre 56-72mm, sucrées et juteuses', 'https://picsum.photos/seed/oranges/400/300', true),
-  ('Pommes', 'Fruits', 'kg', 800, 150, 12, 'Fès-Meknès', 'Automne 2026', 'Extra', 'Pommes Golden du Moyen Atlas, calibre 70-80mm', 'https://picsum.photos/seed/pommes/400/300', true),
-  ('Amandes', 'Fruits secs', 'kg', 150, 50, 65, 'Tafilalet', 'Automne 2026', 'A', 'Amandes Marcona décortiquées, calibre 20/22', 'https://picsum.photos/seed/amandes/400/300', true),
-  ('Dattes Medjool', 'Fruits secs', 'kg', 500, 100, 90, 'Dra-Tafilalet', 'Automne 2026', 'Extra', 'Dattes Medjool premium, calibre Jumbo', 'https://picsum.photos/seed/dattes/400/300', true),
-  ('Carottes', 'Légumes', 'kg', 2200, 300, 4, 'Souss-Massa', 'Automne 2026', 'A', 'Carottes fraîches, calibre moyen', 'https://picsum.photos/seed/carottes/400/300', true)
+  ('Tomates', 'Légumes', 'kg', 1200, 200, 8, 'Souss-Massa', 'Automne 2026', 'A', 'Tomates fraîches de la région de Souss, calibre 60-80mm', 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=300&fit=crop', true),
+  ('Oranges', 'Agrumes', 'kg', 3500, 500, 5, 'Souss-Massa', 'Hiver 2026', 'A', 'Oranges Maroc Late, calibre 56-72mm, sucrées et juteuses', 'https://images.unsplash.com/photo-1547514701-42782101795e?w=400&h=300&fit=crop', true),
+  ('Pommes', 'Fruits', 'kg', 800, 150, 12, 'Fès-Meknès', 'Automne 2026', 'Extra', 'Pommes Golden du Moyen Atlas, calibre 70-80mm', 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop', true),
+  ('Amandes', 'Fruits secs', 'kg', 150, 50, 65, 'Tafilalet', 'Automne 2026', 'A', 'Amandes Marcona décortiquées, calibre 20/22', 'https://images.unsplash.com/photo-1772986797605-f0b52fff45b0?w=400&h=300&fit=crop', true),
+  ('Dattes Medjool', 'Fruits secs', 'kg', 500, 100, 90, 'Dra-Tafilalet', 'Automne 2026', 'Extra', 'Dattes Medjool premium, calibre Jumbo', 'https://images.pexels.com/photos/15913411/pexels-photo-15913411.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop', true),
+  ('Carottes', 'Légumes', 'kg', 2200, 300, 4, 'Souss-Massa', 'Automne 2026', 'A', 'Carottes fraîches, calibre moyen', 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&h=300&fit=crop', true)
 ) AS p(name, cat_name, unit, quantity, min_threshold, price_per_unit, origin, season, quality_grade, description, image_url, is_available)
 JOIN categories c ON c.name = p.cat_name;
